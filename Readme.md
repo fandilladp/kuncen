@@ -36,19 +36,20 @@ const key = 'your-secret-key';
 const salt = 'your-salt-value';
 
 app.post('/generate-token', (req, res) => {
-  const token = generateToken(key, salt, 3); // Token berlaku selama 3 menit
+  const token = generateToken(key, salt, 3); // Token berlaku selama 3 menit (UTC)
   res.json({ token });
 });
 
 app.post('/validate-token', (req, res) => {
   const { token } = req.body;
-  const isValid = validateToken(token, key, salt);
+  const isValid = validateToken(token, key, salt); // Validasi tanpa parameter waktu
   res.json({ valid: isValid });
 });
 
 app.listen(3000, () => {
   console.log('Server running on port 3000');
 });
+
 ```
 
 ### 2. Di React (Frontend)
@@ -64,7 +65,7 @@ const key = 'your-secret-key';
 const salt = 'your-salt-value';
 
 function sendRequest() {
-  const token = generateToken(key, salt, 3); // Token berlaku selama 3 menit
+  const token = generateToken(key, salt, 3); // Token berlaku selama 3 menit (berbasis UTC)
   
   fetch('http://localhost:3000/validate-token', {
     method: 'POST',
@@ -82,6 +83,7 @@ function sendRequest() {
       }
     });
 }
+
 ```
 
 ## Fitur

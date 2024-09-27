@@ -6,14 +6,14 @@ const ivLength = 16; // Panjang IV untuk AES-256-CBC
 
 // Fungsi untuk generate token
 export function generateToken(key, salt, minutes) {
-  const now = Math.floor(Date.now() / 1000); // Waktu saat ini dalam detik
-  const expiryTime = now + minutes * 60; // Hitung waktu habis dalam detik
+  const now = Math.floor(Date.now() / 1000); // Waktu saat ini dalam UTC (detik)
+  const expiryTime = now + minutes * 60; // Hitung waktu habis dalam detik (berbasis UTC)
 
   // Pad atau potong key menjadi 32 bytes (256 bits)
-  const keyBuffer = Buffer.alloc(keyLength, key); 
+  const keyBuffer = Buffer.alloc(keyLength, key);
 
   // Buat IV acak dengan panjang 16 bytes
-  const iv = crypto.randomBytes(ivLength); 
+  const iv = crypto.randomBytes(ivLength);
 
   const tokenData = `${key}.${salt}.${expiryTime}`;
 
@@ -47,8 +47,10 @@ export function validateToken(encryptedToken, key, salt) {
       return false;
     }
 
-    // Validasi waktu
-    const now = Math.floor(Date.now() / 1000);
+    // Ambil waktu saat ini dalam UTC
+    const now = Math.floor(Date.now() / 1000); // Waktu saat ini dalam UTC (detik)
+
+    // Validasi apakah waktu token sudah kadaluarsa
     return now <= parseInt(tokenExpiryTime, 10);
   } catch (error) {
     // Tangani semua kesalahan dekripsi dengan mengembalikan false
