@@ -3,6 +3,8 @@ import {
   validateToken,
   generateJwtToken,
   validateJwtToken,
+  encryptPayload,
+  decryptPayload,
 } from '../index.mjs';
 import { expect } from 'chai';
 
@@ -92,5 +94,33 @@ describe('Kuncen Package (JWT)', () => {
     const token = generateJwtToken(key, salt, sampleData, expiryMinutes);
     const decoded = validateJwtToken(token, key, 'wrong-salt');
     expect(decoded).to.be.false;
+  });
+});
+
+describe('Kuncen Package (Encrypt & Decrypt)', () => {
+  const key = 'test-encrypt-key';
+  const payload = { userId: 456, role: 'user' };
+
+  it('should encrypt a payload into a string', () => {
+    const encrypted = encryptPayload(key, payload);
+    expect(encrypted).to.be.a('string');
+    expect(encrypted.length).to.be.greaterThan(0);
+  });
+
+  it('should decrypt an encrypted payload back to original data', () => {
+    const encrypted = encryptPayload(key, payload);
+    const decrypted = decryptPayload(key, encrypted);
+    expect(decrypted).to.be.an('object');
+    expect(decrypted).to.deep.equal(payload);
+  });
+
+  it('should not decrypt with an incorrect key', () => {
+    const encrypted = encryptPayload(key, payload);
+    expect(() => decryptPayload('wrong-key', encrypted)).to.throw();
+  });
+
+  it('should handle invalid encrypted data gracefully', () => {
+    const invalidEncryptedData = 'invalid-encrypted-data';
+    expect(() => decryptPayload(key, invalidEncryptedData)).to.throw();
   });
 });
