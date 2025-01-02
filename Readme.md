@@ -1,7 +1,7 @@
 
 # Kuncen NPM Package
 
-![Rockib Logo](./assets/kuncen.webp)
+![kuncen Logo](./assets/kuncen.webp)
 
 `kuncen` adalah package NPM yang digunakan untuk menghasilkan dan memvalidasi token dinamis dengan enkripsi AES dan waktu habis (expiry time).
 
