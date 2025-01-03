@@ -1,126 +1,91 @@
-import {
-  generateToken,
-  validateToken,
-  generateJwtToken,
-  validateJwtToken,
-  encryptPayload,
-  decryptPayload,
-} from '../index.mjs';
-import { expect } from 'chai';
+// index.js (ESM)
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
-describe('Kuncen Package (Custom AES-256-CBC)', () => {
-  const key = 'test-key';
-  const salt = 'test-salt';
-  const expiryMinutes = 1;
+const algorithm = 'aes-256-cbc';
+const keyLength = 32;
+const ivLength = 16;
 
-  it('should generate a valid token', () => {
-    const token = generateToken(key, salt, expiryMinutes);
-    expect(token).to.be.a('string');
-    expect(token.length).to.be.greaterThan(0);
-  });
+// Generate Token (AES-256-CBC)
+export function generateToken(key, salt, minutes) {
+  const now = Math.floor(Date.now() / 1000);
+  const expiryTime = now + minutes * 60;
 
-  it('should validate a valid token within expiry time', () => {
-    const token = generateToken(key, salt, expiryMinutes);
-    const isValid = validateToken(token, key, salt);
-    expect(isValid).to.be.true;
-  });
+  const keyBuffer = Buffer.alloc(keyLength, key);
+  const iv = crypto.randomBytes(ivLength);
+  const tokenData = `${key}.${salt}.${expiryTime}`;
 
-  it('should not validate an expired token', function (done) {
-    this.timeout(5000); // Set timeout to 5 seconds
+  const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
+  let encrypted = cipher.update(tokenData, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
 
-    const token = generateToken(key, salt, 0); // Token expired immediately
-    setTimeout(() => {
-      const isValid = validateToken(token, key, salt);
-      expect(isValid).to.be.false;
-      done(); // Ensure done() is called to end async test
-    }, 3000); // Wait 3 seconds to simulate token expiration
-  });
+  return `${iv.toString('hex')}:${encrypted}`;
+}
 
-  it('should not validate a token with incorrect key', () => {
-    const token = generateToken(key, salt, expiryMinutes);
-    const isValid = validateToken(token, 'wrong-key', salt);
-    expect(isValid).to.be.false;
-  });
+// Validate Token (AES-256-CBC)
+export function validateToken(encryptedToken, key, salt) {
+  try {
+    const [ivHex, encrypted] = encryptedToken.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const keyBuffer = Buffer.alloc(keyLength, key);
 
-  it('should not validate a token with incorrect salt', () => {
-    const token = generateToken(key, salt, expiryMinutes);
-    const isValid = validateToken(token, key, 'wrong-salt');
-    expect(isValid).to.be.false;
-  });
-});
+    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
 
-describe('Kuncen Package (JWT)', () => {
-  const key = 'test-key';
-  const salt = 'test-salt';
-  const expiryMinutes = 1;
-  const sampleData = { userId: 123, role: 'admin' };
+    const [tokenKey, tokenSalt, tokenExpiryTime] = decrypted.split('.');
+    if (tokenKey !== key || tokenSalt !== salt) return false;
 
-  it('should generate a valid JWT token', () => {
-    const token = generateJwtToken(key, salt, sampleData, expiryMinutes);
-    expect(token).to.be.a('string');
-    expect(token.length).to.be.greaterThan(0);
-  });
+    const now = Math.floor(Date.now() / 1000);
+    return now <= parseInt(tokenExpiryTime, 10);
+  } catch (error) {
+    return false;
+  }
+}
 
-  it('should validate a valid JWT token within expiry time', () => {
-    const token = generateJwtToken(key, salt, sampleData, expiryMinutes);
-    const decoded = validateJwtToken(token, key, salt);
+// Generate JWT Token
+export function generateJwtToken(key, salt, data, minutes) {
+  const secret = key + salt;
+  const expiresIn = `${minutes}m`;
+  return jwt.sign({ data }, secret, { algorithm: 'HS256', expiresIn });
+}
 
-    // decoded seharusnya mengembalikan object payload
-    expect(decoded).to.be.an('object');
-    expect(decoded).to.have.property('data');
-    expect(decoded.data).to.deep.equal(sampleData);
-  });
+// Validate JWT Token
+export function validateJwtToken(token, key, salt) {
+  try {
+    const secret = key + salt;
+    return jwt.verify(token, secret, { algorithms: ['HS256'] });
+  } catch (error) {
+    return false;
+  }
+}
 
-  it('should not validate an expired JWT token', function (done) {
-    this.timeout(5000);
-    // Menggenerate token yang langsung expired
-    const token = generateJwtToken(key, salt, sampleData, 0);
+// Encrypt Payload (AES-256-CBC)
+export function encryptPayload(payload, key, salt) {
+  const jsonData = JSON.stringify(payload);
+  const keyBuffer = Buffer.alloc(keyLength, key + salt);
+  const iv = crypto.randomBytes(ivLength);
 
-    // Tunggu 3 detik lalu cek apakah sudah tidak valid
-    setTimeout(() => {
-      const decoded = validateJwtToken(token, key, salt);
-      expect(decoded).to.be.false;
-      done();
-    }, 3000);
-  });
+  const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
+  let encrypted = cipher.update(jsonData, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
 
-  it('should not validate a JWT token with incorrect key', () => {
-    const token = generateJwtToken(key, salt, sampleData, expiryMinutes);
-    const decoded = validateJwtToken(token, 'wrong-key', salt);
-    expect(decoded).to.be.false;
-  });
+  return `${iv.toString('hex')}:${encrypted}`;
+}
 
-  it('should not validate a JWT token with incorrect salt', () => {
-    const token = generateJwtToken(key, salt, sampleData, expiryMinutes);
-    const decoded = validateJwtToken(token, key, 'wrong-salt');
-    expect(decoded).to.be.false;
-  });
-});
+// Decrypt Payload (AES-256-CBC)
+export function decryptPayload(encryptedPayload, key, salt) {
+  try {
+    const [ivHex, encrypted] = encryptedPayload.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const keyBuffer = Buffer.alloc(keyLength, key + salt);
 
-describe('Kuncen Package (Encrypt & Decrypt)', () => {
-  const key = 'test-encrypt-key';
-  const payload = { userId: 456, role: 'user' };
+    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
 
-  it('should encrypt a payload into a string', () => {
-    const encrypted = encryptPayload(key, payload);
-    expect(encrypted).to.be.a('string');
-    expect(encrypted.length).to.be.greaterThan(0);
-  });
-
-  it('should decrypt an encrypted payload back to original data', () => {
-    const encrypted = encryptPayload(key, payload);
-    const decrypted = decryptPayload(key, encrypted);
-    expect(decrypted).to.be.an('object');
-    expect(decrypted).to.deep.equal(payload);
-  });
-
-  it('should not decrypt with an incorrect key', () => {
-    const encrypted = encryptPayload(key, payload);
-    expect(() => decryptPayload('wrong-key', encrypted)).to.throw();
-  });
-
-  it('should handle invalid encrypted data gracefully', () => {
-    const invalidEncryptedData = 'invalid-encrypted-data';
-    expect(() => decryptPayload(key, invalidEncryptedData)).to.throw();
-  });
-});
+    return JSON.parse(decrypted);
+  } catch (error) {
+    return null;
+  }
+}

@@ -7,9 +7,7 @@ const keyLength = 32;
 const ivLength = 16;
 
 /**
- * ----------------------------------------------------------------------
  * FUNGSI: GENERATE TOKEN (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
  */
 export function generateToken(key, salt, minutes) {
   const now = Math.floor(Date.now() / 1000);
@@ -27,9 +25,7 @@ export function generateToken(key, salt, minutes) {
 }
 
 /**
- * ----------------------------------------------------------------------
  * FUNGSI: VALIDATE TOKEN (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
  */
 export function validateToken(encryptedToken, key, salt) {
   try {
@@ -52,9 +48,7 @@ export function validateToken(encryptedToken, key, salt) {
 }
 
 /**
- * ----------------------------------------------------------------------
  * FUNGSI: GENERATE JWT
- * ----------------------------------------------------------------------
  */
 export function generateJwtToken(key, salt, data, minutes) {
   const secret = key + salt;
@@ -63,9 +57,7 @@ export function generateJwtToken(key, salt, data, minutes) {
 }
 
 /**
- * ----------------------------------------------------------------------
  * FUNGSI: VALIDATE JWT
- * ----------------------------------------------------------------------
  */
 export function validateJwtToken(token, key, salt) {
   try {
@@ -77,9 +69,7 @@ export function validateJwtToken(token, key, salt) {
 }
 
 /**
- * ----------------------------------------------------------------------
  * FUNGSI: ENCRYPT PAYLOAD (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
  */
 export function encryptPayload(payload, key, salt) {
   const jsonData = JSON.stringify(payload);
@@ -94,9 +84,7 @@ export function encryptPayload(payload, key, salt) {
 }
 
 /**
- * ----------------------------------------------------------------------
  * FUNGSI: DECRYPT PAYLOAD (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
  */
 export function decryptPayload(encryptedPayload, key, salt) {
   try {

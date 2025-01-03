@@ -1,40 +1,27 @@
 {
   "name": "kuncen",
-  "version": "1.0.5",
-  "main": "index.js", 
+  "version": "1.1",
+  "description": "Library untuk token AES-256-CBC dan JWT",
+  "main": "index.js",
   "type": "module",
-  "exports": {
-    ".": {
-      "import": "./index.js",   
-      "require": "./index.cjs"
-    }
-  },
-
   "scripts": {
-    "start": "nodemon index.js",
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MYPGE/kuncen.git"
+    "url": "git+https://github.com/fandilladp/kuncen.git"
   },
-  "keywords": [
-    "crypto"
-  ],
   "author": "fandilladp",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/MYPGE/kuncen/issues"
   },
-  "homepage": "https://github.com/MYPGE/kuncen#readme",
-  "description": "",
+ "homepage": "https://github.com/MYPGE/kuncen#readme",
   "dependencies": {
-    "chai": "^5.1.1",
-    "crypto": "^1.0.1",
-    "jsonwebtoken": "^9.0.2",
-    "nodemon": "^3.1.7"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
+    "chai": "^5.1.1",
     "mocha": "^11.0.1"
   }
 }
