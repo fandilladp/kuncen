@@ -1,17 +1,14 @@
-// index.js (ESM)
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+
+// index.cjs (CommonJS)
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const algorithm = 'aes-256-cbc';
 const keyLength = 32;
 const ivLength = 16;
 
-/**
- * ----------------------------------------------------------------------
- * FUNGSI: GENERATE TOKEN (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
- */
-export function generateToken(key, salt, minutes) {
+// FUNGSI: GENERATE TOKEN (Custom AES-256-CBC)
+function generateToken(key, salt, minutes) {
   const now = Math.floor(Date.now() / 1000);
   const expiryTime = now + minutes * 60;
 
@@ -26,12 +23,8 @@ export function generateToken(key, salt, minutes) {
   return `${iv.toString('hex')}:${encrypted}`;
 }
 
-/**
- * ----------------------------------------------------------------------
- * FUNGSI: VALIDATE TOKEN (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
- */
-export function validateToken(encryptedToken, key, salt) {
+// FUNGSI: VALIDATE TOKEN (Custom AES-256-CBC)
+function validateToken(encryptedToken, key, salt) {
   try {
     const [ivHex, encrypted] = encryptedToken.split(':');
     const iv = Buffer.from(ivHex, 'hex');
@@ -51,23 +44,15 @@ export function validateToken(encryptedToken, key, salt) {
   }
 }
 
-/**
- * ----------------------------------------------------------------------
- * FUNGSI: GENERATE JWT
- * ----------------------------------------------------------------------
- */
-export function generateJwtToken(key, salt, data, minutes) {
+// FUNGSI: GENERATE JWT
+function generateJwtToken(key, salt, data, minutes) {
   const secret = key + salt;
   const expiresIn = `${minutes}m`;
   return jwt.sign({ data }, secret, { algorithm: 'HS256', expiresIn });
 }
 
-/**
- * ----------------------------------------------------------------------
- * FUNGSI: VALIDATE JWT
- * ----------------------------------------------------------------------
- */
-export function validateJwtToken(token, key, salt) {
+// FUNGSI: VALIDATE JWT
+function validateJwtToken(token, key, salt) {
   try {
     const secret = key + salt;
     return jwt.verify(token, secret, { algorithms: ['HS256'] });
@@ -76,12 +61,8 @@ export function validateJwtToken(token, key, salt) {
   }
 }
 
-/**
- * ----------------------------------------------------------------------
- * FUNGSI: ENCRYPT PAYLOAD (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
- */
-export function encryptPayload(payload, key, salt) {
+// FUNGSI: ENCRYPT PAYLOAD (Custom AES-256-CBC)
+function encryptPayload(payload, key, salt) {
   const jsonData = JSON.stringify(payload);
   const keyBuffer = Buffer.alloc(keyLength, key + salt);
   const iv = crypto.randomBytes(ivLength);
@@ -93,12 +74,8 @@ export function encryptPayload(payload, key, salt) {
   return `${iv.toString('hex')}:${encrypted}`;
 }
 
-/**
- * ----------------------------------------------------------------------
- * FUNGSI: DECRYPT PAYLOAD (Custom AES-256-CBC)
- * ----------------------------------------------------------------------
- */
-export function decryptPayload(encryptedPayload, key, salt) {
+// FUNGSI: DECRYPT PAYLOAD (Custom AES-256-CBC)
+function decryptPayload(encryptedPayload, key, salt) {
   try {
     const [ivHex, encrypted] = encryptedPayload.split(':');
     const iv = Buffer.from(ivHex, 'hex');
@@ -113,3 +90,13 @@ export function decryptPayload(encryptedPayload, key, salt) {
     return null;
   }
 }
+
+// Ekspor semua fungsi
+module.exports = {
+  generateToken,
+  validateToken,
+  generateJwtToken,
+  validateJwtToken,
+  encryptPayload,
+  decryptPayload
+};
